@@ -44,7 +44,39 @@ document.addEventListener("DOMContentLoaded", () => {
           details.participants.forEach((p) => {
             const li = document.createElement("li");
             li.className = "participant-item";
-            li.textContent = p;
+
+            const span = document.createElement("span");
+            span.className = "participant-email";
+            span.textContent = p;
+
+            const btn = document.createElement("button");
+            btn.className = "delete-participant";
+            btn.title = "Unregister participant";
+            btn.innerHTML = "&times;"; // multiplication sign as delete icon
+
+            // Handle delete click
+            btn.addEventListener("click", async (ev) => {
+              ev.stopPropagation();
+              try {
+                const resp = await fetch(
+                  `/activities/${encodeURIComponent(name)}/participants?email=${encodeURIComponent(p)}`,
+                  { method: "DELETE" }
+                );
+
+                const result = await resp.json();
+                if (resp.ok) {
+                  // refresh the activities list to reflect changes
+                  fetchActivities();
+                } else {
+                  console.error("Failed to remove participant:", result);
+                }
+              } catch (error) {
+                console.error("Error removing participant:", error);
+              }
+            });
+
+            li.appendChild(span);
+            li.appendChild(btn);
             participantsList.appendChild(li);
           });
         } else {
@@ -92,6 +124,8 @@ document.addEventListener("DOMContentLoaded", () => {
         messageDiv.textContent = result.message;
         messageDiv.className = "success";
         signupForm.reset();
+        // Refresh activities so the new participant appears immediately
+        fetchActivities();
       } else {
         messageDiv.textContent = result.detail || "An error occurred";
         messageDiv.className = "error";
